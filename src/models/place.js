@@ -11,6 +11,14 @@ const placeSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    typeof: [{
+        type: String,
+        required: false,
+        enum: ["studio", "hall", 
+                "house", "mansion",
+                "field", "room",
+            ]
+    }],
     description: {
         type: String,
         required: true,
@@ -53,6 +61,16 @@ const placeSchema = new mongoose.Schema({
         required: false,
         trim: true
     },
+    rooms: {
+        type: Number,
+        required: false,
+        trim: true
+    },
+    toilt: {
+        type: Number,
+        required: false,
+        trim: true
+    },
     amenities: [{
         type: String,
         required: false,
@@ -60,8 +78,9 @@ const placeSchema = new mongoose.Schema({
                 "wifi", "Bathrooms", "Sound System", 
                 "Private Entrance", "Sink", 
                 "Kitchen", "Large table", 
-                "Green Screen", "TV", 
-                "Stage"
+                "Green Screen", "TV", "Stage", 
+                "changing room", "makeup room",
+                "lounge"
             ]
     }],
     accessibility: [{
@@ -77,7 +96,7 @@ const placeSchema = new mongoose.Schema({
         required: false,
         trim: true
     },
-    unavailableDate: [{
+    unavailabledate: [{
         type: Date,
         required: false
     }],

@@ -54,22 +54,27 @@ router.post('/api/place', isVerified, upload.array('images', 15), async (req, re
 
 // get all places
 router.get('/api/place', async (req, res) => {
-    try {
-        const place = await Place.find({})
-        res.send(place)
-    } catch (e) {
-        res.status(500).send()
-    }
-})
+    //  pagination and filter
+    // const match = {}
 
+    // if (req.query) {
+        
+    // }
 
-// get all open places
-router.get('/api/placeisopen', async (req, res) => {
+    console.log(parseInt(req.query.skip));
+    const noOnPage = parseInt(req.query.limit) || 10
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
+
     try {
         const place = await Place.find({
             isOpen: true
         })
-        res.send(place)
+        .select('-media')
+        .limit(noOnPage)
+        .skip(pageNo)
+
+        console.log(pageNo);
+        res.status(200).send(place)
     } catch (e) {
         res.status(500).send()
     }
@@ -101,6 +106,7 @@ router.get('/api/myplaces', isVerified, async (req, res) => {
 
 // get all of a user's place
 router.get('/api/:id/places', async (req, res) => {
+    // filtering, sorting and pagination to be done here
     try {
         const place = await Place.find({owner: req.params.id})
         res.status(200).send(place)
@@ -114,7 +120,7 @@ router.get('/api/:id/places', async (req, res) => {
 // Edit a place
 router.patch('/api/place/:id', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ["title", "description", "maxguest", "size", "isOpen", "rules"]
+    const allowedUpdates = ["title", "description", "maxguest", "size", "isOpen", "rules", "rooms", "toilet"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {
