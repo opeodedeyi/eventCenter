@@ -11,14 +11,16 @@ const placeSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    typeof: [{
+    typeof: {
         type: String,
-        required: false,
+        required: true,
         enum: ["studio", "hall", 
                 "house", "mansion",
                 "field", "room",
+                "restaurant", "school",
+                "church"
             ]
-    }],
+    },
     description: {
         type: String,
         required: true,
@@ -66,9 +68,14 @@ const placeSchema = new mongoose.Schema({
         required: false,
         trim: true
     },
-    toilt: {
+    toilet: {
         type: Number,
         required: false,
+        trim: true
+    },
+    price: {
+        type: Number,
+        required: true,
         trim: true
     },
     amenities: [{

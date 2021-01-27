@@ -54,26 +54,32 @@ router.post('/api/place', isVerified, upload.array('images', 15), async (req, re
 
 // get all places
 router.get('/api/place', async (req, res) => {
-    //  pagination and filter
-    // const match = {}
+    //  add search
+    const match = {
+        isOpen: true
+    }
 
-    // if (req.query) {
-        
-    // }
+    if (req.query.idealfor) {
+        match.idealfor = req.query.idealfor
+    } if (req.query.amenities) {
+        match.amenities = req.query.amenities
+    } if (req.query.availabledate) {
+        match.availabledate = req.query.availabledate
+    } if (req.query.typeof) {
+        match.typeof = req.query.typeof
+    }
 
-    console.log(parseInt(req.query.skip));
+    console.log(match);
+
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
 
     try {
-        const place = await Place.find({
-            isOpen: true
-        })
+        const place = await Place.find(match)
         .select('-media')
         .limit(noOnPage)
         .skip(pageNo)
 
-        console.log(pageNo);
         res.status(200).send(place)
     } catch (e) {
         res.status(500).send()
