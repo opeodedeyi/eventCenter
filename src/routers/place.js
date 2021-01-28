@@ -54,31 +54,35 @@ router.post('/api/place', isVerified, upload.array('images', 15), async (req, re
 
 // get all places
 router.get('/api/place', async (req, res) => {
-    //  add search
     const match = {
         isOpen: true
     }
+    const sort = {}
 
     if (req.query.idealfor) {
         match.idealfor = req.query.idealfor
     } if (req.query.amenities) {
         match.amenities = req.query.amenities
     } if (req.query.availabledate) {
-        match.availabledate = req.query.availabledate
+        match.availabledate = { "$ne": req.query.availabledate }
     } if (req.query.typeof) {
         match.typeof = req.query.typeof
+    } if (req.query.search) {
+        match.$text = {$search: req.query.search}
+        sort.score = {$meta: "textScore"}
     }
 
-    console.log(match);
+    console.log(match,`, ${sort}`);
 
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
 
     try {
-        const place = await Place.find(match)
+        const place = await Place.find(match, sort)
         .select('-media')
         .limit(noOnPage)
         .skip(pageNo)
+        .sort(sort)
 
         res.status(200).send(place)
     } catch (e) {
@@ -126,7 +130,7 @@ router.get('/api/:id/places', async (req, res) => {
 // Edit a place
 router.patch('/api/place/:id', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ["title", "description", "maxguest", "size", "isOpen", "rules", "rooms", "toilet"]
+    const allowedUpdates = ["title", "description", "maxguest", "size", "isOpen", "rules", "rooms", "toilet", "price", "phonenumber", "location", "typeof"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {
@@ -259,14 +263,30 @@ router.delete('/api/photo/:id', isVerified, async (req, res) => {
 })
 
 
-// add to ideal for
-router.post('/api/place/:id/addideal', isVerified, async (req, res) => {
+// add to objects that are array
+router.patch('/api/place/:id/list', isVerified, async (req, res) => {
+    // [addideal, amenities, accessibility, unavailabledate, typeof]
     const idealToAdd = req.body.idealfor
+    const amenitiesToAdd = req.body.amenities
+    const accessibilityToAdd = req.body.accessibility
+    const dateToAdd = req.body.unavailabledate
 
     try {
         const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
 
-        idealToAdd.forEach((item) => place.idealfor.addToSet(item))
+        if (idealToAdd) {
+            idealToAdd.forEach((item) => place.idealfor.addToSet(item))
+        }
+        if (amenitiesToAdd) {
+            amenitiesToAdd.forEach((item) => place.amenities.addToSet(item))
+        }
+        if (accessibilityToAdd) {
+            accessibilityToAdd.forEach((item) => place.accessibility.addToSet(item))
+        }
+        if (dateToAdd) {
+            dateToAdd.forEach((date) => place.unavailabledate.addToSet(date))
+        }
+        
         await place.save()
         res.status(200).send(place)
     } catch (e) {
@@ -275,9 +295,13 @@ router.post('/api/place/:id/addideal', isVerified, async (req, res) => {
 })
 
 
-// remove from ideal for
-router.delete('/api/place/:id/removeideal', isVerified, async (req, res) => {
+// remove from objects that are array
+router.delete('/api/place/:id/list', isVerified, async (req, res) => {
+    // [addideal, amenities, accessibility, unavailabledate, typeof]
     const idealToRemove = req.body.idealfor
+    const amenitiesToRemove = req.body.amenities
+    const accessibilityToRemove = req.body.accessibility
+    const dateToRemove = req.body.unavailabledate
 
     try {
         const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
@@ -287,114 +311,22 @@ router.delete('/api/place/:id/removeideal', isVerified, async (req, res) => {
                 return idea != item
             })
         })
-        await place.save()
-        res.status(201).send(place)
-    } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-
-// add to amenities
-router.post('/api/place/:id/addamenities', isVerified, async (req, res) => {
-    const amenitiesToAdd = req.body.amenities
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-
-        amenitiesToAdd.forEach((item) => place.amenities.addToSet(item))
-        await place.save()
-        res.status(200).send(place)
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-
-
-// remove from amenities
-router.delete('/api/place/:id/removeamenities', isVerified, async (req, res) => {
-    const amenitiesToRemove = req.body.amenities
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-
         amenitiesToRemove.forEach((item) => {
             place.amenities = place.amenities.filter((idea) => {
                 return idea != item
             })
         })
-        await place.save()
-        res.status(201).send(place)
-    } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-
-// add to accessibility
-router.post('/api/place/:id/addaccessibility', isVerified, async (req, res) => {
-    const accessibilityToAdd = req.body.accessibility
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-
-        accessibilityToAdd.forEach((item) => place.accessibility.addToSet(item))
-        await place.save()
-        res.status(200).send(place)
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-
-
-// remove from accessibility
-router.delete('/api/place/:id/removeaccessibility', isVerified, async (req, res) => {
-    const accessibilityToRemove = req.body.accessibility
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-
         accessibilityToRemove.forEach((item) => {
             place.accessibility = place.accessibility.filter((idea) => {
                 return idea != item
             })
         })
-        await place.save()
-        res.status(201).send(place)
-    } catch (e) {
-        res.status(500).send(e)
-    }
-})
-
-
-// add to date
-router.post('/api/place/:id/date', isVerified, async (req, res) => {
-    const dateToAdd = req.body.unavailableDate
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-
-        dateToAdd.forEach((date) => place.unavailableDate.addToSet(date))
-        await place.save()
-        res.status(200).send(place)
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
-
-
-// remove a date
-router.delete('/api/place/:id/date', isVerified, async (req, res) => {
-    const dateToRemove = req.body.unavailableDate
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-
         dateToRemove.forEach((date) => {
-            place.accessibility = place.unavailableDate.filter((dates) => {
+            place.unavailabledate = place.unavailabledate.filter((dates) => {
                 return dates != date
             })
         })
+
         await place.save()
         res.status(201).send(place)
     } catch (e) {

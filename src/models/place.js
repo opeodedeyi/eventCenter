@@ -18,7 +18,7 @@ const placeSchema = new mongoose.Schema({
                 "house", "mansion",
                 "field", "room",
                 "restaurant", "school",
-                "church"
+                "church", "beach", "warehouse"
             ]
     },
     description: {
@@ -27,22 +27,9 @@ const placeSchema = new mongoose.Schema({
         trim: true
     },
     location: {
-        street: {
-            type: String,
-            required: true
-        },
-        city: {
-            type: String,
-            required: true
-        },
-        state: {
-            type: String,
-            required: true
-        },
-        country: {
-            type: String,
-            required: true
-        }
+        type: String,
+        required: true,
+        trim: true
     },
     idealfor: [{
         type: String,
@@ -112,10 +99,9 @@ const placeSchema = new mongoose.Schema({
         required: false,
         default: true
     },
-    // image related start
-    thumbnail: {
-        type: String,
-        required: false,
+    phonenumber: {
+        type: Number,
+        required: true,
         trim: true
     },
     media: [{
@@ -123,10 +109,11 @@ const placeSchema = new mongoose.Schema({
         ref: 'Media',
         required: false,
     }],
-    // image related end
 }, {
     timestamps: true
 })
+
+placeSchema.index({ location: 'text' });
 
 
 const Place = mongoose.model('Place', placeSchema)
