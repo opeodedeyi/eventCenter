@@ -18,14 +18,14 @@ const sendConfirmationEmail = async (user) => {
     const url = `http://localhost:3000/api/confirmation/${token}`
 
     transport.sendMail({
-        from: 'opeyemiodedeyi@gmail.com',
+        from: `opeyemiodedeyi@gmail.com`,
         to: `${user.fullname} <${user.email}>`,
         subject: 'Confirmation Email',
         html: `
             <!DOCTYPE html>
             <html>
             <header>
-                <title>MerlinsTutor</title>
+                <title>Confirmation email</title>
             </header>
             
             <body style="background-color: #E9ECF2;">
@@ -58,11 +58,11 @@ const sendConfirmationEmail = async (user) => {
                 <tr style="padding-top:40px;padding-bottom:30px;">
                     <td style="padding-bottom:10px;margin-bottom:10px;">Sincerely,</td>
                 </tr>
-                <tr><td>Center Team</td></tr>
+                <tr><td>${process.env.COMPANY_NAME}</td></tr>
                 <tr>
-                    <td style="padding-top:40px;"><a href="${url}"><input value="Confirm Email" type="button" style="background: #F05D5E;
-                    padding: 15px 20px;
-                    border-radius: 4px;
+                    <td style="padding-top:40px;"><a href="${url}"><input value="Confirm Email" type="button" style="background: #4D69B4;
+                    padding: 15px 40px;
+                    border-radius: 22.2px;
                     border: none;
                     color:#fff;
                     font-size:0.9rem;
@@ -100,7 +100,7 @@ const sendPasswordResetEmail = async (user) => {
             <!DOCTYPE html>
             <html>
             <header>
-                <title>MerlinsTutor</title>
+                <title>Password reset</title>
             </header>
             
             <body style="background-color: #E9ECF2;">
@@ -139,11 +139,11 @@ const sendPasswordResetEmail = async (user) => {
                 <tr style="padding-top:40px;padding-bottom:30px;">
                     <td>Sincerely,</td>
                 </tr>
-                <tr><td>Center Team</td></tr>
+                <tr><td>${process.env.COMPANY_NAME}</td></tr>
                 <tr>
-                    <td style="padding-top:40px;"><a href="${url}"><input value="Reset Password" type="button" style="background: #F05D5E;
-                    padding: 15px 20px;
-                    border-radius: 4px;
+                    <td style="padding-top:40px;"><a href="${url}"><input value="Reset Password" type="button" style="background: #4D69B4;
+                    padding: 15px 40px;
+                    border-radius: 22.2px;
                     border: none;
                     color:#fff;
                     font-size:0.9rem;
@@ -169,7 +169,7 @@ const reportUser = async (user, repo, body) => {
 
     transport.sendMail({
         from: 'opeyemiodedeyi@gmail.com',
-        to: `website <opeyemiodedeyi@gmail.com>`,
+        to: `${process.env.COMPANY_NAME} <lookaamdotcom@gmail.com>`,
         subject: `Reporting ${user.fullname}, ${user.email}, ${user._id}`,
         html:`
         <!DOCTYPE html>
@@ -209,7 +209,7 @@ const reportUser = async (user, repo, body) => {
               </tr
                 
               <tr style="padding-top:40px;padding-bottom:30px;">
-                <td style="padding-bottom:10px;margin-bottom:10px;">Sincerely,</td>
+                <td style="padding-bottom:10px;margin-bottom:10px;">Sincerely, ${process.env.COMPANY_NAME}</td>
               </tr>
               <tr><td style="padding-bottom:10px;margin-bottom:10px;">${repo.fullname}</td></tr>
             </table>

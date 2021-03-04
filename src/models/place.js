@@ -8,7 +8,7 @@ const placeSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        required: true,
+        required: false,
         trim: true
     },
     typeof: {
@@ -18,18 +18,33 @@ const placeSchema = new mongoose.Schema({
                 "house", "mansion",
                 "field", "room",
                 "restaurant", "school",
-                "church", "beach", "warehouse"
+                "church", "beach", "warehouse",
+                "others"
             ]
     },
     description: {
         type: String,
-        required: true,
+        required: false,
+        maxlength: 500,
         trim: true
     },
     location: {
         type: String,
         required: true,
         trim: true
+    },
+    time: {
+        alwaysopen: {
+            type: Boolean,
+            required: true,
+            default: false
+        },
+        open: {
+            type: String
+        },
+        close: {
+            type: String
+        }
     },
     idealfor: [{
         type: String,
@@ -42,7 +57,7 @@ const placeSchema = new mongoose.Schema({
     }],
     maxguest: {
         type: Number,
-        required: true,
+        required: false,
         trim: true
     },
     size: {
@@ -68,47 +83,48 @@ const placeSchema = new mongoose.Schema({
     amenities: [{
         type: String,
         required: false,
-        enum: ["electricity", "air conditioning", 
-                "wifi", "Bathrooms", "Sound System", 
-                "Private Entrance", "Sink", 
-                "Kitchen", "Large table", 
-                "Green Screen", "TV", "Stage", 
+        enum: ["electricity", "a/c", 
+                "wifi", "sound system", 
+                "private entrance", 
+                "kitchen", "large table", "tv",
+                "green screen", "Stage", 
                 "changing room", "makeup room",
-                "lounge"
+                "lounge", "soundproof"
             ]
     }],
     accessibility: [{
         type: String,
         required: false,
-        enum: ["Wheelchair accessible", "Elevator", 
-                "On-site parking", "Parking near by",
+        enum: ["wheelchair", "Elevator", 
+                "on-site parking", "parking near by",
                 "Stairs"
             ]
     }],
     rules: {
         type: String,
         required: false,
+        maxlength: 500,
         trim: true
     },
     unavailabledate: [{
         type: Date,
         required: false
     }],
-    isOpen: {
+    deactivated: {
         type: Boolean,
         required: false,
-        default: true
+        default: false
+    },
+    img: {
+        type: Boolean,
+        required: false,
+        default: false
     },
     phonenumber: {
-        type: Number,
+        type: String,
         required: true,
         trim: true
     },
-    media: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Media',
-        required: false,
-    }],
 }, {
     timestamps: true
 })

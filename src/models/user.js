@@ -36,11 +36,15 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
-    // work in progress
     profilePhoto: {
-        type: String,
-        required: false,
-        trim: true
+        key: {
+            type: String,
+            required: false
+        },
+        location: {
+            type: String,
+            required: false
+        },
     },
     isEmailConfirmed: {
         type: Boolean,

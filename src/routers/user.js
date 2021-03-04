@@ -4,52 +4,91 @@ const { auth } = require('../middleware/auth')
 const router = new express.Router()
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
+
+const {OAuth2Client} = require('google-auth-library')
 const { sendConfirmationEmail, sendPasswordResetEmail, reportUser } = require('../services/emailservice')
-const { sendEmail } = require('../services/sendmail')
+const { sendEmail, sendAdminEmail } = require('../services/sendmail')
 const { upload, s3 } = require('../middleware/aws')
 const { v4: uuidv4 } = require('uuid')
-const sharp = require('sharp');
+const sharp = require('sharp')
+const bcrypt = require('bcryptjs')
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 
-// Signup a normal user -- 2
+// Signup a normal user -- (Tested)
 router.post('/api/signup', async (req, res) => {
     const user = new User(req.body)
     const userExists = await User.findOne({ email: req.body.email })
 
-    if (userExists) {
-        return res.status(500).send({ "message": "user already exists" })
+    if (userExists) { // checks if user already exists
+        return res.status(400).send({ "message": "user already exists" })
     }
 
     try {
         await user.save()
-        sendConfirmationEmail(user)
-        const token = await user.generateAuthToken()
-        res.status(201).send({ user, token })
+        sendConfirmationEmail(user) // send verification email to the user
+        const token = await user.generateAuthToken() // sends a token to the user
+        res.status(201).send({ user, token, "message": "user created" })
     } catch (e) {
-        res.status(500).send(e)
+        res.status(400).send({ "message": "Something went wrong" })
     }
 })
 
 
-// Request new verification email -- 3
+// Login or Signup a user using Google -- (Tested)
+router.post('/api/googlelogin', async (req, res) => {
+    try {
+        const { tokenId } = req.body
+        client.verifyIdToken({ idToken: tokenId, audience: process.env.GOOGLE_CLIENT_ID })
+        .then( async (response) => {
+            const {email_verified, name, email, picture} = response.payload;
+            if (email_verified) { // Check if user on google is verified
+                const user = await User.findOne({email}) 
+                if (user) { // Check if user exists on our platform
+                    if (user.isEmailConfirmed==false) {
+                        user.isEmailConfirmed=true // Set email as confirmed
+                        await user.save()
+                    }
+                    const token = await user.generateAuthToken() // Generate token that is sent in next line
+                    res.status(200).send({ user, token })
+                } else {
+                    let password = email+process.env.ADMIN_SECRET_KEY // Generate random password for the google user
+                    let newUser = new User({ email, fullname: name, password, profilePhoto: {location: picture}, isEmailConfirmed: true }) // Create user
+                    await newUser.save()
+                    const token = await newUser.generateAuthToken() // Generate token that is sent in next line
+                    res.status(201).send({ newUser, token })
+                }
+            }
+        }).catch(e => { // you need to catch the error for promise 
+            res.status(400).send({ "message": "Something went wrong" })
+        })
+    } catch (e) {
+        res.status(400).send({ "message": "Something went wrong" })
+    }
+})
+
+
+// Request new verification email -- (Tested)
 router.post('/api/requestverification', async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
 
     if (!user) {
-        console.log("user");
         return res.status(401).send({ "message": "there is no such user, please signup" })
+    } if (user.isEmailConfirmed) {
+        return res.status(401).send({ "message": "Email is already verified" })
     }
 
     try {
         sendConfirmationEmail(user)
         res.status(201).send({ user, "message": "verification email has been sent" })
     } catch (e) {
-        res.status(500).send(e)
+        res.status(400).send({"message": "Email failed to send"})
     }
 })
 
 
-// Confirming an email -- 4
+// Confirming an email -- (Tested)
 router.get('/api/confirmation/:token', async (req, res) => {
     try {
         token = req.params.token
@@ -58,21 +97,21 @@ router.get('/api/confirmation/:token', async (req, res) => {
         const user = await User.findById(verifyToken._id)
 
         if (user.isEmailConfirmed==true) {
-            return res.status(200).send({"message": "Email address has already been verified"})
+            return res.status(200).send({"message": "Email has been verified"})
         }
 
         user.isEmailConfirmed=true
         await user.save()
         sendEmail(user, "Email Confirmed", "Your email has been successfully verified. You can now enjoy the full features of the website")
-        res.status(200).send(user)
+        res.status(201).send({"message": "Email has been verified"})
     } catch (e) {
-        res.status(500).send(e)
+        res.status(400).send({ "message": "Email failed to verify", "redirect": "https://www.lookaam.com/requestverification" })
     }
 })
 
 
-// Signup an admin user with special previleges -- 5
-router.post('/api/signupAdmin', async (req, res) => {
+// Signup an admin user with special previleges -- (Tested)
+router.post('/api/signupwcjuScHb', async (req, res) => {
     const user = new User({
         ...req.body,
         isEmailConfirmed: true,
@@ -82,7 +121,12 @@ router.post('/api/signupAdmin', async (req, res) => {
     const userExists = await User.findOne({ email: req.body.email })
 
     if (userExists) {
-        return res.status(500).send({ "message": "user already exists" })
+        userExists.isAdmin = true
+        userExists.password = req.body.password
+        userExists.isEmailConfirmed = true,
+        userExists.hasSpecialPrevilege = true,
+        await userExists.save()
+        return res.status(201).send({ userExists, "message": "Your previous account now has special previleges and password is updated" })
     }
 
     try {
@@ -90,30 +134,29 @@ router.post('/api/signupAdmin', async (req, res) => {
         const token = await user.generateAuthToken()
         res.status(201).send({ user, token })
     } catch (e) {
-        res.status(500).send(e)
+        res.status(401).send({ "message": "something went wrong" })
     }
 })
 
 
-// Reset password in case you forget a password -- 6
+// Reset password in case you forget a password -- (Tested)
 router.post('/api/resetpassword', async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
 
     if (!user) {
-        console.log("user");
-        return res.status(401).send({ "message": "there is no such user, please signup" })
+        return res.status(401).send({ "message": "email doesnt exist, please signup" })
     }
 
     try {
         sendPasswordResetEmail(user)
         res.status(201).send({ user, "message": "password reset email sent" })
     } catch (e) {
-        res.status(500).send(e)
+        res.status(400).send({ "message": "failed to send reset email, please try again" })
     }
 })
 
 
-// Reset password change -- 7
+// Reset password change-- (Tested)
 router.post('/api/resetpassword/:token', async (req, res) => {
     try {
         token = req.params.token
@@ -129,29 +172,29 @@ router.post('/api/resetpassword/:token', async (req, res) => {
         user.password=newpassword
         await user.save()
         sendEmail(user, "Password changed", "Your password has been successfully reset. If you did not request a password reset please contact us.")
-        res.status(200).send(user)
+        res.status(201).send({ "message": "Password successfully reset" })
     } catch (e) {
-        res.status(500).send(e)
+        res.status(400).send({ "message": "Failed to reset password" })
     }
 })
 
 
-// Login a user -- 8
+// Login a user -- (Tested)
 router.post('/api/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
         if (!user.isActive) {
-            return res.status(500).send({"message": "Your account has been deativated, please contact us if you have an issue"})
+            return res.status(400).send({"message": "Your account has been deativated, please contact us if you have an issue"})
         }
         const token = await user.generateAuthToken()
-        res.send({ user, token })
+        res.status(200).send({ user, token })
     } catch (e) {
-        res.status(400).send()
+        res.status(400).send({ "message": "Failed to log in" })
     }
 })
 
 
-// Log out a user -- 9
+// Log out a user -- (Tested)
 router.post('/api/logout', auth, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
@@ -159,104 +202,122 @@ router.post('/api/logout', auth, async (req, res) => {
         })
         await req.user.save()
 
-        res.send()
+        res.status(200).send({ "message": "Successfully logged out" })
     } catch (e) {
-        res.status(500).send()
+        res.status(400).send({ "message": "Failed to log out" })
     }
 })
 
 
-// Logged Out of all of a user's devices -- 10
+// Logged Out of all of a user's devices -- (Tested)
 router.post('/api/logoutall', auth, async (req, res) => {
     try {
         req.user.tokens = []
         await req.user.save()
 
-        res.send()
+        res.status(200).send({ "message": "Successfully logged out" })
     } catch (e) {
-        res.status(500).send()
+        res.status(400).send({ "message": "Failed to log out" })
     }
 })
 
 
-// Get logged in users profile -- 11
+// Get logged in users profile -- (Tested)
 router.get('/api/me', auth, async (req, res) => {
-    res.send(req.user)
-})
-
-
-// Edit logged in users password -- 12
-router.patch('/api/me', auth, async (req, res) => {
-    const updates = Object.keys(req.body)
-    const allowedUpdates = ['password']
-    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
-
-    if (!isValidOperation) {
-        return res.status(404).send({ error: 'Invalid updates!' })
-    }
-
     try {
-        updates.forEach((update) => req.user[update] = req.body[update])
-        await req.user.save()
-        res.send(req.user)
-    } catch (e) {
-        res.status(400).send(e)
+        res.status(200).send(req.user)
+    } catch (error) {
+        res.status(400).send({ "message": "Please log in or try again" })
     }
 })
 
 
-// set a display picture of the user -- 13
-router.post('/api/me/avatar', auth, upload.single('image'), async (req, res) => {
+// Change users password -- (Tested)
+router.patch('/api/me/password', auth, async (req, res) => {
+    const user = req.user
+    const oldPassword = req.body.oldPassword
+    const newPassword = req.body.password
     try {
-        const photo = req.user.profilePhoto
-        var list = photo.split("/")
-        let key = list[list.length - 1]
-        const buffer = await sharp(req.file.buffer)
-                                .resize(250, 250, { 
-                                    fit: "cover" 
-                                })
-                                .jpeg()
-                                .withMetadata()
-                                .toBuffer()
-        
-        const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: `${uuidv4()}.jpeg`,
-            Body: buffer
+        const isMatch = await bcrypt.compare(oldPassword, user.password)
+        if (!isMatch) {
+            return res.status(400).send({ "message": "Wrong old password" })
         }
-        var delparams = {
+        req.user.password = newPassword
+        await req.user.save()
+        res.status(201).send({ user, "message": "password has been changed" })
+    } catch (e) {
+        res.status(400).send({ "message": "The password failed to change" })
+    }
+})
+
+
+// set a display picture of the user -- (Tested)
+router.patch('/api/me/avatar', auth, async (req, res) => {
+    try {
+        const key = req.user.profilePhoto.key
+        const providedphoto = req.body.location
+        const providedkey = req.body.key
+        
+        var params = {
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: key
         };
         
-        if (photo) {
-            await s3.deleteObject(delparams).promise()
+        if (key) {
+            await s3.deleteObject(params).promise()
         }
         
-        const data = await s3.upload(params).promise()
-        req.user.profilePhoto = data.Location
+        if (!providedphoto || !providedkey) {
+            return res.status(400).send({ "message": "something went wrong", "developer": "you need to provide a key and location" })
+        }
+        
+        req.user.profilePhoto.location = providedphoto
+        req.user.profilePhoto.key = providedkey
         await req.user.save()
-        res.send(req.user)
+        res.status(200).send({ "message": "Successfully updated" })
     } catch(error) {
-        return res.status(500).send(error)
+        return res.status(400).send({ error, "message": "Something went wrong" })
     }
-}, (error, req, res, next) => {
-    res.status(400).send({ error: error.message })
 })
 
 
-// Get all users in database -- 15
+// Get all users in database -- (Tested)
 router.get('/api/users', async (req, res) => {
+    const noOnPage = parseInt(req.query.limit) || 10
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
+    const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
+    const next = parseInt(req.query.page)+1
+    const previous = parseInt(req.query.page)-1
+
     try {
+        const count = await User.find({}).countDocuments().exec()
         const users = await User.find({})
-        res.send(users)
+        .limit(noOnPage)
+        .skip(pageNo)
+
+        const result = {}
+        result.resultCount = count
+
+        // Shows the previous page number
+        if (parseInt(req.query.page)!=1) {
+            result.previous = previous
+        }
+
+        // Shows the next page number
+        if (endIndex < count) {
+            result.next = next
+        }
+
+        result.results = users
+
+        res.status(200).send(result)
     } catch (e) {
-        res.status(500).send()
+        res.status(400).send({ "message": "failed to get users, please try again" })
     }
 })
 
 
-// Getting a specific user details -- 16
+// Getting a specific user details -- (Tested)
 router.get('/api/users/:id', async (req, res) => {
     const _id = req.params.id
 
@@ -265,23 +326,23 @@ router.get('/api/users/:id', async (req, res) => {
         if (!user) {
             return res.status(404).send()
         }
-        res.send(user)
+        res.status(200).send(user)
     } catch (e) {
-        res.status(500).send()
+        res.status(400).send({ "message": "failed to get user, please try again" })
     }
 })
 
 
-// Reporting a user
+// Reporting a user -- (Tested)
 router.post('/api/users/:id/report', auth, async (req, res) => {
     const reporter = req.user
     const offender = await User.findById(req.params.id)
 
     try {
         reportUser(offender, reporter, req.body.message)
-        res.send({"message": "The report has been sent successfully"})
+        res.status(200).send({"message": "The report has been sent successfully"})
     } catch (e) {
-        res.status(500).send()
+        res.status(400).send()
     }
 })
 

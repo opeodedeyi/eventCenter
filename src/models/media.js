@@ -1,7 +1,17 @@
 const mongoose = require('mongoose')
 
 const mediaSchema = new mongoose.Schema({
-    url: {
+    etag: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    location: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    key: {
         type: String,
         required: true,
         trim: true
@@ -10,6 +20,11 @@ const mediaSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User'
+    },
+    place: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Place'
     }
 }, {
     timestamps: true
