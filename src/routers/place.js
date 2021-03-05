@@ -281,73 +281,60 @@ router.delete('/api/photo/:id', isVerified, async (req, res) => {
     }
 })
 
-
-// add to [addideal, amenities, accessibility, unavailabledate]
+// add to [idealfor, amenities, accessibility, unavailabledate] -- (Tested)
 router.patch('/api/place/:id/list', isVerified, async (req, res) => {
-    // [addideal, amenities, accessibility, unavailabledate]
-    const idealToAdd = req.body.idealfor
-    const amenitiesToAdd = req.body.amenities
-    const accessibilityToAdd = req.body.accessibility
-    const dateToAdd = req.body.unavailabledate
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ["idealfor", "amenities", "accessibility", "unavailabledate"]
+    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+
+    if (!isValidOperation) {
+        return res.status(404).send({ error: 'Invalid updates!' })
+    }
 
     try {
         const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
+        if (!place) {
+            return res.status(404).send({ "message": "place does not exist" })
+        }
 
-        if (idealToAdd) {
-            idealToAdd.forEach((item) => place.idealfor.addToSet(item))
+        for (let update of updates) {
+            for (let item of req.body[update]) {
+                place[update].addToSet(item)
+            }
         }
-        if (amenitiesToAdd) {
-            amenitiesToAdd.forEach((item) => place.amenities.addToSet(item))
-        }
-        if (accessibilityToAdd) {
-            accessibilityToAdd.forEach((item) => place.accessibility.addToSet(item))
-        }
-        if (dateToAdd) {
-            dateToAdd.forEach((date) => place.unavailabledate.addToSet(date))
-        }
-        
         await place.save()
-        res.status(200).send({ "message": "successfully updated" })
+        res.status(200).send({ place, "message": "successfully updated" })
     } catch (e) {
         res.status(400).send({ "message": "failed to update" })
     }
 })
 
 
-// remove from [addideal, amenities, accessibility, unavailabledate]
+// remove from [idealfor, amenities, accessibility, unavailabledate] -- (Tested)
 router.delete('/api/place/:id/list', isVerified, async (req, res) => {
-    // [addideal, amenities, accessibility, unavailabledate]
-    const idealToRemove = req.body.idealfor
-    const amenitiesToRemove = req.body.amenities
-    const accessibilityToRemove = req.body.accessibility
-    const dateToRemove = req.body.unavailabledate
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ["idealfor", "amenities", "accessibility", "unavailabledate"]
+    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+
+    if (!isValidOperation) {
+        return res.status(404).send({ error: 'Invalid updates!' })
+    }
 
     try {
         const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
+        if (!place) {
+            return res.status(400).send({ "message": "place does not exist" })
+        }
 
-        idealToRemove.forEach((item) => {
-            place.idealfor = place.idealfor.filter((idea) => {
-                return idea != item
-            })
-        })
-        amenitiesToRemove.forEach((item) => {
-            place.amenities = place.amenities.filter((idea) => {
-                return idea != item
-            })
-        })
-        accessibilityToRemove.forEach((item) => {
-            place.accessibility = place.accessibility.filter((idea) => {
-                return idea != item
-            })
-        })
-        dateToRemove.forEach((date) => {
-            place.unavailabledate = place.unavailabledate.filter((dates) => {
-                return dates != date
-            })
-        })
-
+        for (let update of updates) {
+            for (let item of req.body[update]) {
+                place[update] = place[update].filter((idea) => { 
+                    return idea != item 
+                })
+            }
+        }
         await place.save()
-        res.status(201).send({ "message": "successfully removed" })
+        res.status(201).send({ place, "message": "successfully removed" })
     } catch (e) {
         res.status(400).send({ "message": "failed to remove" })
     }

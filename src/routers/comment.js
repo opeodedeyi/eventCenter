@@ -4,7 +4,7 @@ const { isVerified } = require('../middleware/auth')
 const router = new express.Router()
 
 
-//  Comment on a place/ reply
+//  Comment on a place or reply a comment
 router.post('/api/place/:id/comment', isVerified, async (req, res) => {
     try {
         const postId = req.params.id
@@ -22,7 +22,7 @@ router.post('/api/place/:id/comment', isVerified, async (req, res) => {
 })
 
 
-//  edit a comment/ reply
+//  edit a comment or reply
 router.patch('/api/comment/:id', isVerified, async (req, res) => {
     try {
         const commentId = req.params.id
@@ -36,7 +36,7 @@ router.patch('/api/comment/:id', isVerified, async (req, res) => {
 })
 
 
-//  delete a comment/ reply
+//  delete a comment or reply
 router.delete('/api/comment/:id', isVerified, async (req, res) => {
     try {
         const postId = req.params.id

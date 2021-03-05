@@ -5,7 +5,7 @@ const specialPrevilege = require('../middleware/specialPrevilege')
 const router = new express.Router()
 
 
-router.post('/api/admin/:id/deactivate', specialPrevilege, async (req, res) => {
+router.post('/api/admin/:id/ban', specialPrevilege, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
         const places = await Place.find({ owner: user._id })
@@ -14,16 +14,16 @@ router.post('/api/admin/:id/deactivate', specialPrevilege, async (req, res) => {
         user.tokens = []
         await user.save()
         for (let place of places) {
-            place.isOpen = false
+            place.deactivated = true
             await place.save()
         }
-        res.status(200).send(user)
+        res.status(200).send({user, "message": "The user has been banned" })
     } catch (e) {
         res.status(400).send(e)
     }
 })
 
-router.post('/api/admin/:id/activate', specialPrevilege, async (req, res) => {
+router.post('/api/admin/:id/unban', specialPrevilege, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
         const places = await Place.find({ owner: user._id })
@@ -31,10 +31,10 @@ router.post('/api/admin/:id/activate', specialPrevilege, async (req, res) => {
         user.isActive = true
         await user.save()
         for (let place of places) {
-            place.isOpen = true
+            place.deactivated = false
             await place.save()
         }
-        res.status(200).send(user)
+        res.status(200).send({ user, "message": "The user has been unbanned" })
     } catch (e) {
         res.status(400).send(e)
     }
