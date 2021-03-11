@@ -51,6 +51,11 @@ const userSchema = new mongoose.Schema({
         required: false,
         default: false
     },
+    isVerified: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
     isAdmin: {
         type: Boolean,
         required: false,
@@ -66,6 +71,11 @@ const userSchema = new mongoose.Schema({
         required: false,
         default: false
     },
+    savedplaces: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
+        ref: 'Place'
+    }],
     tokens: [{
         token: {
             type: String,
@@ -75,6 +85,8 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 })
+
+userSchema.index({ fullname: 'text' });
 
 // this generates the token anytime it is called
 userSchema.methods.generateAuthToken = async function () {

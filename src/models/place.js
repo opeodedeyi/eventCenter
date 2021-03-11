@@ -9,6 +9,7 @@ const placeSchema = new mongoose.Schema({
     title: {
         type: String,
         required: false,
+        maxlength: 50,
         trim: true
     },
     typeof: {
@@ -116,6 +117,11 @@ const placeSchema = new mongoose.Schema({
         default: false
     },
     img: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
+    featured: {
         type: Boolean,
         required: false,
         default: false

@@ -1,7 +1,7 @@
 const express = require('express')
 const Place = require('../models/place')
 const Media = require('../models/media')
-const { isVerified } = require('../middleware/auth')
+const { auth, isVerified } = require('../middleware/auth')
 const { s3 } = require('../middleware/aws')
 const router = new express.Router()
 require('dotenv').config()
@@ -15,11 +15,56 @@ router.post('/api/place', isVerified, async (req, res) => {
         deactivated: false,
     })
 
+    if (place.time.alwaysopen) {
+        place.time.open = undefined
+        place.time.close = undefined
+    }
+
     try {
         await place.save()
         res.status(201).send(place)
     } catch (error) {
         res.status(400).send({ "message": "A required field was not filled", error })
+    }
+})
+
+
+// Add a place to my saved/favorite places -- (Tested)
+router.post('/api/favorite/:id', auth, async (req, res) => {
+    const placeId = req.params.id
+    const place = await Place.findById(placeId)
+    const user = req.user
+
+    try {
+        if (!place) {
+            return res.status(404).send({"message": "This place does not exist"})
+        }
+        req.user.savedplaces.addToSet(placeId)
+        await req.user.save()
+        res.status(200).send({ user, "message": "This place has been saved" })
+    } catch (e) {
+        res.status(400).send({"message": "failed to add this place to my saved places"})
+    }
+})
+
+
+// remove a place to my saved/favorite places -- (Tested)
+router.delete('/api/favorite/:id', auth, async (req, res) => {
+    const placeId = req.params.id
+    const place = await Place.findById(placeId)
+    const user = req.user
+
+    try {
+        if (!place) {
+            return res.status(404).send({"message": "This place does not exist"})
+        }
+        req.user.savedplaces = req.user.savedplaces.filter((objid) => { 
+            return objid != placeId 
+        })
+        await req.user.save()
+        res.status(200).send({ user, "message": "This place has been removed" })
+    } catch (e) {
+        res.status(400).send({"message": "failed to remove this place from my saved places"})
     }
 })
 
@@ -46,16 +91,18 @@ router.get('/api/place', async (req, res) => {
             $all: amenitiesarray 
         }
     } if (req.query.availabledate) {
-        match.availabledate = { "$ne": req.query.availabledate }
+        match.unavailabledate = { "$ne": req.query.availabledate }
     } if (req.query.typeof) {
         match.typeof = req.query.typeof
+    } if (req.query.featured) {
+        match.featured = req.query.featured
     } if (req.query.search) {
         match.$text = {$search: req.query.search}
         sort.score = {$meta: "textScore"}
     }
 
     const noOnPage = parseInt(req.query.limit) || 10
-    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
     const next = parseInt(req.query.page)+1
     const previous = parseInt(req.query.page)-1
@@ -118,7 +165,7 @@ router.get('/api/place/:id', async (req, res) => {
 // get all logged in user's not deactivated place -- (Tested)
 router.get('/api/myactiveplaces', isVerified, async (req, res) => {
     const noOnPage = parseInt(req.query.limit) || 10
-    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
     const next = parseInt(req.query.page)+1
     const previous = parseInt(req.query.page)-1
@@ -147,7 +194,7 @@ router.get('/api/myactiveplaces', isVerified, async (req, res) => {
 // get all logged in user's deactivated place -- (Tested)
 router.get('/api/mydeactivatedplaces', isVerified, async (req, res) => {
     const noOnPage = parseInt(req.query.limit) || 10
-    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
     const next = parseInt(req.query.page)+1
     const previous = parseInt(req.query.page)-1
@@ -192,6 +239,10 @@ router.patch('/api/place/:id', isVerified, async (req, res) => {
         }
 
         updates.forEach((update) => place[update] = req.body[update])
+        if (place.time.alwaysopen) {
+            place.time.open = undefined
+            place.time.close = undefined
+        }
         await place.save()
         res.status(201).send({place, "message": "successfully updated" })
     } catch (e) {

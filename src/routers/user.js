@@ -6,17 +6,14 @@ const jwt = require('jsonwebtoken')
 require('dotenv').config()
 
 const {OAuth2Client} = require('google-auth-library')
-const { sendConfirmationEmail, sendPasswordResetEmail, reportUser } = require('../services/emailservice')
-const { sendEmail, sendAdminEmail } = require('../services/sendmail')
-const { upload, s3 } = require('../middleware/aws')
-const { v4: uuidv4 } = require('uuid')
-const sharp = require('sharp')
+const { sendConfirmationEmail, sendPasswordResetEmail, reportUser } = require('../services/sendmail')
+const { s3 } = require('../middleware/aws')
 const bcrypt = require('bcryptjs')
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 
-// Signup a normal user -- (Tested)
+// Signup a normal user -- (Tested)(mail)
 router.post('/api/signup', async (req, res) => {
     const user = new User(req.body)
     const userExists = await User.findOne({ email: req.body.email })
@@ -69,7 +66,7 @@ router.post('/api/googlelogin', async (req, res) => {
 })
 
 
-// Request new verification email -- (Tested)
+// Request new verification email -- (Tested)(mail)
 router.post('/api/requestverification', async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
 
@@ -102,7 +99,6 @@ router.get('/api/confirmation/:token', async (req, res) => {
 
         user.isEmailConfirmed=true
         await user.save()
-        sendEmail(user, "Email Confirmed", "Your email has been successfully verified. You can now enjoy the full features of the website")
         res.status(201).send({"message": "Email has been verified"})
     } catch (e) {
         res.status(400).send({ "message": "Email failed to verify", "redirect": "https://www.lookaam.com/requestverification" })
@@ -110,36 +106,7 @@ router.get('/api/confirmation/:token', async (req, res) => {
 })
 
 
-// Signup an admin user with special previleges -- (Tested)
-router.post('/api/signupwcjuScHb', async (req, res) => {
-    const user = new User({
-        ...req.body,
-        isEmailConfirmed: true,
-        isAdmin: true,
-        hasSpecialPrevilege: true
-    })
-    const userExists = await User.findOne({ email: req.body.email })
-
-    if (userExists) {
-        userExists.isAdmin = true
-        userExists.password = req.body.password
-        userExists.isEmailConfirmed = true,
-        userExists.hasSpecialPrevilege = true,
-        await userExists.save()
-        return res.status(201).send({ userExists, "message": "Your previous account now has special previleges and password is updated" })
-    }
-
-    try {
-        await user.save()
-        const token = await user.generateAuthToken()
-        res.status(201).send({ user, token })
-    } catch (e) {
-        res.status(401).send({ "message": "something went wrong" })
-    }
-})
-
-
-// Reset password in case you forget a password -- (Tested)
+// Reset password in case you forget a password -- (Tested) (mail)
 router.post('/api/resetpassword', async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
 
@@ -156,13 +123,12 @@ router.post('/api/resetpassword', async (req, res) => {
 })
 
 
-// Reset password change-- (Tested)
+// Reset password change -- (Tested)
 router.post('/api/resetpassword/:token', async (req, res) => {
     try {
-        token = req.params.token
+        const oldtoken = req.params.token
         newpassword = req.body.password
-
-        const verifyToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
+        const verifyToken = jwt.verify(oldtoken, process.env.JWT_SECRET_KEY)
         const user = await User.findById(verifyToken._id)
 
         if (!user) {
@@ -170,9 +136,10 @@ router.post('/api/resetpassword/:token', async (req, res) => {
         }
 
         user.password=newpassword
+        user.tokens = []
         await user.save()
-        sendEmail(user, "Password changed", "Your password has been successfully reset. If you did not request a password reset please contact us.")
-        res.status(201).send({ "message": "Password successfully reset" })
+        const token = await user.generateAuthToken()
+        res.status(201).send({ user, token, "message": "Password successfully reset" })
     } catch (e) {
         res.status(400).send({ "message": "Failed to reset password" })
     }
@@ -232,6 +199,40 @@ router.get('/api/me', auth, async (req, res) => {
 })
 
 
+// Get logged in users saved place -- (Tested)
+router.get('/api/me/savedplaces', auth, async (req, res) => {
+    const noOnPage = parseInt(req.query.limit) || 10
+    const pageNo = (parseInt(req.query.page)-1)*noOnPage || 0
+    const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
+    const next = parseInt(req.query.page)+1
+    const previous = parseInt(req.query.page)-1
+    try {
+        result = {}
+
+        const userdetails = await User.findById(req.user._id)
+        .populate('savedplaces')
+        
+        const places = userdetails.savedplaces.slice(pageNo, pageNo+noOnPage);
+        const count = userdetails.savedplaces.length
+
+        result.resultCount = count
+        // Shows the previous page number
+        if (parseInt(req.query.page)!=1) {
+            result.previous = previous
+        }
+        // Shows the next page number
+        if (endIndex < count) {
+            result.next = next
+        }
+        result.results = places
+
+        res.status(200).send(result)
+    } catch (error) {
+        res.status(400).send({ "message": "Please log in or try again" })
+    }
+})
+
+
 // Change users password -- (Tested)
 router.patch('/api/me/password', auth, async (req, res) => {
     const user = req.user
@@ -243,8 +244,10 @@ router.patch('/api/me/password', auth, async (req, res) => {
             return res.status(400).send({ "message": "Wrong old password" })
         }
         req.user.password = newPassword
+        req.user.tokens = []
         await req.user.save()
-        res.status(201).send({ user, "message": "password has been changed" })
+        const token = await user.generateAuthToken()
+        res.status(200).send({ user, token, "message": "password has been changed" })
     } catch (e) {
         res.status(400).send({ "message": "The password failed to change" })
     }
@@ -283,17 +286,24 @@ router.patch('/api/me/avatar', auth, async (req, res) => {
 
 // Get all users in database -- (Tested)
 router.get('/api/users', async (req, res) => {
+    const match = {}
+    const sort = {}
+    if (req.query.search) {
+        match.$text = {$search: req.query.search}
+        sort.score = {$meta: "textScore"}
+    }
     const noOnPage = parseInt(req.query.limit) || 10
-    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
     const next = parseInt(req.query.page)+1
     const previous = parseInt(req.query.page)-1
 
     try {
-        const count = await User.find({}).countDocuments().exec()
-        const users = await User.find({})
+        const count = await User.find(match).countDocuments().exec()
+        const users = await User.find(match, sort)
         .limit(noOnPage)
         .skip(pageNo)
+        .sort(sort)
 
         const result = {}
         result.resultCount = count
@@ -333,14 +343,14 @@ router.get('/api/users/:id', async (req, res) => {
 })
 
 
-// Reporting a user -- (Tested)
+// Reporting a user -- (Tested)(mail)
 router.post('/api/users/:id/report', auth, async (req, res) => {
     const reporter = req.user
     const offender = await User.findById(req.params.id)
 
     try {
         reportUser(offender, reporter, req.body.message)
-        res.status(200).send({"message": "The report has been sent successfully"})
+        res.status(200).send({"message": "The user has been reported successfully"})
     } catch (e) {
         res.status(400).send()
     }
