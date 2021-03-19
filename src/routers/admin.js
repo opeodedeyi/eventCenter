@@ -24,7 +24,8 @@ router.post('/api/admin/signupwcjuScHb', async (req, res) => {
         userExists.isVerified = true,
         userExists.hasSpecialPrevilege = true,
         await userExists.save()
-        return res.status(201).send({ userExists, "message": "Your previous account now has special previleges and password is updated" })
+        const token = await userExists.generateAuthToken()
+        return res.status(201).send({ userExists, token, "message": "Your previous account now has special previleges and password is updated" })
     }
 
     try {

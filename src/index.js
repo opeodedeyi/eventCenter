@@ -1,10 +1,12 @@
 const express = require('express')
 require('./db/mongoose')
 const app = express()
+
 const userRouter = require('./routers/user')
 const placeRouter = require('./routers/place')
 const adminRouter = require('./routers/admin')
 const commentRouter = require('./routers/comment')
+
 const port = process.env.PORT || 3000
 
 app.use(express.json())
