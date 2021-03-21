@@ -5,7 +5,7 @@ const router = new express.Router()
 
 
 //  Comment on a place or reply a comment -- (Tested)
-router.post('/api/place/:id/comment', isVerified, async (req, res) => {
+router.post('/place/:id/comment', isVerified, async (req, res) => {
     try {
         const postId = req.params.id
         const comment = new Comment({
@@ -23,7 +23,7 @@ router.post('/api/place/:id/comment', isVerified, async (req, res) => {
 
 
 //  edit a comment or reply -- (Tested)
-router.patch('/api/comment/:id/edit', isVerified, async (req, res) => {
+router.patch('/comment/:id/edit', isVerified, async (req, res) => {
     try {
         const commentId = req.params.id
         const comment = await Comment.findOne({ owner: req.user._id, _id: commentId })
@@ -37,7 +37,7 @@ router.patch('/api/comment/:id/edit', isVerified, async (req, res) => {
 
 
 //  delete a comment or reply -- (Tested)
-router.delete('/api/comment/:id', isVerified, async (req, res) => {
+router.delete('/comment/:id', isVerified, async (req, res) => {
     try {
         const postId = req.params.id
         await Comment.find({ reply: postId }).deleteMany()
@@ -50,7 +50,7 @@ router.delete('/api/comment/:id', isVerified, async (req, res) => {
 
 
 //  Reply a Comment -- (Tested)
-router.post('/api/comment/:id/reply', isVerified, async (req, res) => {
+router.post('/comment/:id/reply', isVerified, async (req, res) => {
     try {
         const commentId = req.params.id
         const reply = new Comment({
@@ -68,7 +68,7 @@ router.post('/api/comment/:id/reply', isVerified, async (req, res) => {
 
 
 //  like a Comment -- (Tested)
-router.post('/api/comment/:id/like', isVerified, async (req, res) => {
+router.post('/comment/:id/like', isVerified, async (req, res) => {
     try {
         const commentId = req.params.id
         const comment = await Comment.findById(commentId)
@@ -82,7 +82,7 @@ router.post('/api/comment/:id/like', isVerified, async (req, res) => {
 
 
 //  unlike a Comment -- (Tested)
-router.delete('/api/comment/:id/like', isVerified, async (req, res) => {
+router.delete('/comment/:id/like', isVerified, async (req, res) => {
     try {
         const commentId = req.params.id
         const comment = await Comment.findById(commentId)
@@ -96,7 +96,7 @@ router.delete('/api/comment/:id/like', isVerified, async (req, res) => {
 
 
 // get all comments to a post/ place -- (Tested)
-router.get('/api/place/:id/comment', async (req, res) => {
+router.get('/place/:id/comment', async (req, res) => {
     const postId = req.params.id
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)
@@ -131,7 +131,7 @@ router.get('/api/place/:id/comment', async (req, res) => {
 
 
 // get all replies to a comment -- (Tested)
-router.get('/api/comment/:id/reply', async (req, res) => {
+router.get('/comment/:id/reply', async (req, res) => {
     const commentId = req.params.id
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit)

@@ -14,7 +14,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 
 // Signup a normal user -- (Tested)(mail)
-router.post('/api/signup', async (req, res) => {
+router.post('/signup', async (req, res) => {
     const user = new User(req.body)
     const userExists = await User.findOne({ email: req.body.email })
 
@@ -34,7 +34,7 @@ router.post('/api/signup', async (req, res) => {
 
 
 // Login or Signup a user using Google -- (Tested)
-router.post('/api/googlelogin', async (req, res) => {
+router.post('/googlelogin', async (req, res) => {
     try {
         const { tokenId } = req.body
         client.verifyIdToken({ idToken: tokenId, audience: process.env.GOOGLE_CLIENT_ID })
@@ -67,7 +67,7 @@ router.post('/api/googlelogin', async (req, res) => {
 
 
 // Request new verification email -- (Tested)(mail)
-router.post('/api/requestverification', async (req, res) => {
+router.post('/requestverification', async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
 
     if (!user) {
@@ -86,7 +86,7 @@ router.post('/api/requestverification', async (req, res) => {
 
 
 // Confirming an email -- (Tested)
-router.get('/api/confirmation/:token', async (req, res) => {
+router.get('/confirmation/:token', async (req, res) => {
     try {
         token = req.params.token
 
@@ -107,7 +107,7 @@ router.get('/api/confirmation/:token', async (req, res) => {
 
 
 // Reset password in case you forget a password -- (Tested) (mail)
-router.post('/api/resetpassword', async (req, res) => {
+router.post('/resetpassword', async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
 
     if (!user) {
@@ -124,7 +124,7 @@ router.post('/api/resetpassword', async (req, res) => {
 
 
 // Reset password change -- (Tested)
-router.post('/api/resetpassword/:token', async (req, res) => {
+router.post('/resetpassword/:token', async (req, res) => {
     try {
         const oldtoken = req.params.token
         newpassword = req.body.password
@@ -147,7 +147,7 @@ router.post('/api/resetpassword/:token', async (req, res) => {
 
 
 // Login a user -- (Tested)
-router.post('/api/login', async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
         if (!user.isActive) {
@@ -162,7 +162,7 @@ router.post('/api/login', async (req, res) => {
 
 
 // Log out a user -- (Tested)
-router.post('/api/logout', auth, async (req, res) => {
+router.post('/logout', auth, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
             return token.token !== req.token
@@ -177,7 +177,7 @@ router.post('/api/logout', auth, async (req, res) => {
 
 
 // Logged Out of all of a user's devices -- (Tested)
-router.post('/api/logoutall', auth, async (req, res) => {
+router.post('/logoutall', auth, async (req, res) => {
     try {
         req.user.tokens = []
         await req.user.save()
@@ -190,7 +190,7 @@ router.post('/api/logoutall', auth, async (req, res) => {
 
 
 // Get logged in users profile -- (Tested)
-router.get('/api/me', auth, async (req, res) => {
+router.get('/me', auth, async (req, res) => {
     try {
         res.status(200).send(req.user)
     } catch (error) {
@@ -200,7 +200,7 @@ router.get('/api/me', auth, async (req, res) => {
 
 
 // Get logged in users saved place -- (Tested)
-router.get('/api/me/savedplaces', auth, async (req, res) => {
+router.get('/me/savedplaces', auth, async (req, res) => {
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*noOnPage || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
@@ -234,7 +234,7 @@ router.get('/api/me/savedplaces', auth, async (req, res) => {
 
 
 // Change users password -- (Tested)
-router.patch('/api/me/password', auth, async (req, res) => {
+router.patch('/me/password', auth, async (req, res) => {
     const user = req.user
     const oldPassword = req.body.oldPassword
     const newPassword = req.body.password
@@ -255,7 +255,7 @@ router.patch('/api/me/password', auth, async (req, res) => {
 
 
 // set a display picture of the user -- (Tested)
-router.patch('/api/me/avatar', auth, async (req, res) => {
+router.patch('/me/avatar', auth, async (req, res) => {
     try {
         const key = req.user.profilePhoto.key
         const providedphoto = req.body.location
@@ -285,7 +285,7 @@ router.patch('/api/me/avatar', auth, async (req, res) => {
 
 
 // Get all users in database -- (Tested)
-router.get('/api/users', async (req, res) => {
+router.get('/users', async (req, res) => {
     const match = {}
     const sort = {}
     if (req.query.search) {
@@ -328,7 +328,7 @@ router.get('/api/users', async (req, res) => {
 
 
 // Getting a specific user details -- (Tested)
-router.get('/api/users/:id', async (req, res) => {
+router.get('/users/:id', async (req, res) => {
     const _id = req.params.id
 
     try {
@@ -344,7 +344,7 @@ router.get('/api/users/:id', async (req, res) => {
 
 
 // Reporting a user -- (Tested)(mail)
-router.post('/api/users/:id/report', auth, async (req, res) => {
+router.post('/users/:id/report', auth, async (req, res) => {
     const reporter = req.user
     const offender = await User.findById(req.params.id)
 

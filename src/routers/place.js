@@ -8,7 +8,7 @@ require('dotenv').config()
 
 
 //  Create an event place -- (Tested)
-router.post('/api/place', isVerified, async (req, res) => {
+router.post('/place', isVerified, async (req, res) => {
     const place = new Place({
         ...req.body,
         owner: req.user._id,
@@ -30,7 +30,7 @@ router.post('/api/place', isVerified, async (req, res) => {
 
 
 // Add a place to my saved/favorite places -- (Tested)
-router.post('/api/favorite/:id', auth, async (req, res) => {
+router.post('/favorite/:id', auth, async (req, res) => {
     const placeId = req.params.id
     const place = await Place.findById(placeId)
     const user = req.user
@@ -49,7 +49,7 @@ router.post('/api/favorite/:id', auth, async (req, res) => {
 
 
 // remove a place to my saved/favorite places -- (Tested)
-router.delete('/api/favorite/:id', auth, async (req, res) => {
+router.delete('/favorite/:id', auth, async (req, res) => {
     const placeId = req.params.id
     const place = await Place.findById(placeId)
     const user = req.user
@@ -70,7 +70,7 @@ router.delete('/api/favorite/:id', auth, async (req, res) => {
 
 
 // get all places (search and filter and sorting done here) -- (Tested)
-router.get('/api/place', async (req, res) => {
+router.get('/place', async (req, res) => {
     const match = {
         deactivated: false,
         img: true // Only places with photos should show
@@ -141,7 +141,7 @@ router.get('/api/place', async (req, res) => {
 
 
 // add a route to get all images to a place -- (Tested)
-router.get('/api/place/:id/photo', async (req, res) => {
+router.get('/place/:id/photo', async (req, res) => {
     try {
         const images = await Media.find({ place: req.params.id })
         res.status(200).send(images)
@@ -152,7 +152,7 @@ router.get('/api/place/:id/photo', async (req, res) => {
 
 
 // get a single place -- (Tested)
-router.get('/api/place/:id', async (req, res) => {
+router.get('/place/:id', async (req, res) => {
     try {
         const place = await Place.findById(req.params.id)
         res.status(200).send(place)
@@ -163,7 +163,7 @@ router.get('/api/place/:id', async (req, res) => {
 
 
 // get all logged in user's not deactivated place -- (Tested)
-router.get('/api/myactiveplaces', isVerified, async (req, res) => {
+router.get('/myactiveplaces', isVerified, async (req, res) => {
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
@@ -192,7 +192,7 @@ router.get('/api/myactiveplaces', isVerified, async (req, res) => {
 
 
 // get all logged in user's deactivated place -- (Tested)
-router.get('/api/mydeactivatedplaces', isVerified, async (req, res) => {
+router.get('/mydeactivatedplaces', isVerified, async (req, res) => {
     const noOnPage = parseInt(req.query.limit) || 10
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
@@ -222,7 +222,7 @@ router.get('/api/mydeactivatedplaces', isVerified, async (req, res) => {
 
 // updating
 // Edit a place -- (Tested)
-router.patch('/api/place/:id', isVerified, async (req, res) => {
+router.patch('/place/:id', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = ["title", "description", "maxguest", "size", "deactivated", "rules", "rooms", "toilet", "price", "phonenumber", "location", "typeof", "time"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
@@ -252,7 +252,7 @@ router.patch('/api/place/:id', isVerified, async (req, res) => {
 
 
 //  Add a photo to place -- (Tested)
-router.patch('/api/place/:id/photo', isVerified, async (req, res) => {
+router.patch('/place/:id/photo', isVerified, async (req, res) => {
     const place = await Place.findOne({ _id: req.params.id, owner: req.user._id })
     const data = req.body
     const noOfImages = Media.find({ place: req.params.id }).countDocuments().exec()
@@ -280,7 +280,7 @@ router.patch('/api/place/:id/photo', isVerified, async (req, res) => {
 
 
 // delete a place -- (Tested)
-router.delete('/api/place/:id', isVerified, async (req, res) => {
+router.delete('/place/:id', isVerified, async (req, res) => {
     const _id = req.params.id
 
     try {
@@ -305,7 +305,7 @@ router.delete('/api/place/:id', isVerified, async (req, res) => {
 
 
 // delete a place's photo -- (Tested)
-router.delete('/api/photo/:id', isVerified, async (req, res) => {
+router.delete('/photo/:id', isVerified, async (req, res) => {
     const _id = req.params.id
 
     try {
@@ -333,7 +333,7 @@ router.delete('/api/photo/:id', isVerified, async (req, res) => {
 })
 
 // add to [idealfor, amenities, accessibility, unavailabledate] -- (Tested)
-router.patch('/api/place/:id/list', isVerified, async (req, res) => {
+router.patch('/place/:id/list', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = ["idealfor", "amenities", "accessibility", "unavailabledate"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
@@ -362,7 +362,7 @@ router.patch('/api/place/:id/list', isVerified, async (req, res) => {
 
 
 // remove from [idealfor, amenities, accessibility, unavailabledate] -- (Tested)
-router.delete('/api/place/:id/list', isVerified, async (req, res) => {
+router.delete('/place/:id/list', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = ["idealfor", "amenities", "accessibility", "unavailabledate"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))

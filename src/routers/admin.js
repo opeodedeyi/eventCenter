@@ -7,7 +7,7 @@ const router = new express.Router()
 
 
 // Signup an admin user -- (Tested)
-router.post('/api/admin/signupwcjuScHb', async (req, res) => {
+router.post('/admin/signupwcjuScHb', async (req, res) => {
     const user = new User({
         ...req.body,
         isEmailConfirmed: true,
@@ -39,7 +39,7 @@ router.post('/api/admin/signupwcjuScHb', async (req, res) => {
 
 
 // Ban a user -- (Tested)
-router.post('/api/admin/:id/ban', specialPrevilege, async (req, res) => {
+router.post('/admin/:id/ban', specialPrevilege, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
         const places = await Place.find({ owner: user._id })
@@ -63,7 +63,7 @@ router.post('/api/admin/:id/ban', specialPrevilege, async (req, res) => {
 
 
 // Unban a user -- (Tested)
-router.post('/api/admin/:id/unban', specialPrevilege, async (req, res) => {
+router.post('/admin/:id/unban', specialPrevilege, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
         const places = await Place.find({ owner: user._id })
@@ -82,7 +82,7 @@ router.post('/api/admin/:id/unban', specialPrevilege, async (req, res) => {
 
 
 // Verify a user -- (Tested)
-router.post('/api/admin/:id/verify', specialPrevilege, async (req, res) => {
+router.post('/admin/:id/verify', specialPrevilege, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
 
@@ -96,7 +96,7 @@ router.post('/api/admin/:id/verify', specialPrevilege, async (req, res) => {
 
 
 // Unverify a user -- (Tested)
-router.post('/api/admin/:id/unverify', specialPrevilege, async (req, res) => {
+router.post('/admin/:id/unverify', specialPrevilege, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
 
@@ -110,7 +110,7 @@ router.post('/api/admin/:id/unverify', specialPrevilege, async (req, res) => {
 
 
 // Give a user special previledges -- (Tested)
-router.post('/api/admin/:id/makespecial', adminUser, async (req, res) => {
+router.post('/admin/:id/makespecial', adminUser, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
 
@@ -124,7 +124,7 @@ router.post('/api/admin/:id/makespecial', adminUser, async (req, res) => {
 
 
 // remove special previledges from a user -- (Tested)
-router.post('/api/admin/:id/makeordinary', adminUser, async (req, res) => {
+router.post('/admin/:id/makeordinary', adminUser, async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id })
 
@@ -139,7 +139,7 @@ router.post('/api/admin/:id/makeordinary', adminUser, async (req, res) => {
 
 
 // make a place featured -- (Tested)
-router.post('/api/place/:id/featured', specialPrevilege, async (req, res) => {
+router.post('/place/:id/featured', specialPrevilege, async (req, res) => {
 
     try {
         const place = await Place.findOne({ _id: req.params.id })
@@ -157,7 +157,7 @@ router.post('/api/place/:id/featured', specialPrevilege, async (req, res) => {
 
 
 // remove a place from featured -- (Tested)
-router.delete('/api/place/:id/featured', specialPrevilege, async (req, res) => {
+router.delete('/place/:id/featured', specialPrevilege, async (req, res) => {
 
     try {
         const place = await Place.findOne({ _id: req.params.id })
