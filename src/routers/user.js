@@ -13,6 +13,16 @@ const bcrypt = require('bcryptjs')
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 
+// Lookaam API homepage -- (Tested)
+router.get('', async (req, res) => {
+    try {
+        res.status(201).send({"message": "Welcome to lookaam api"})
+    } catch (e) {
+        res.status(400).send({ "message": "Email failed to verify", "redirect": "https://www.lookaam.com/requestverification" })
+    }
+})
+
+
 // Signup a normal user -- (Tested)(mail)
 router.post('/signup', async (req, res) => {
     const user = new User(req.body)
