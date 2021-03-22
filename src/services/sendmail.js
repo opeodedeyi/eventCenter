@@ -32,7 +32,7 @@ const sendConfirmationEmail = async (user) => {
         _id: user._id.toString() 
     }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' })
 
-    const url = `https://${website}/api/confirmation/${token}`
+    const url = `https://${website}/confirmation/${token}`
 
     transporter.sendMail({
         from: `${name} <${email}>`,
@@ -107,7 +107,7 @@ const sendPasswordResetEmail = async (user) => {
         _id: user._id.toString() 
     }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' })
 
-    const url = `https://${website}/api/resetpassword/${token}`
+    const url = `https://${website}/resetpassword/${token}`
 
     transporter.sendMail({
         from: `${name} <${email}>`,
