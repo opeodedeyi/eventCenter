@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const environment = process.env.NODE_ENV
 
-if (environment==="prod") {
+if (environment==="production") {
     const URI = process.env.MONGODB_ATLAS_URI_PROD
     mongoose.connect(URI, {
         useNewUrlParser: true,
