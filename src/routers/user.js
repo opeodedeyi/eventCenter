@@ -64,7 +64,7 @@ router.post('/googlelogin', async (req, res) => {
                     let newUser = new User({ email, fullname: name, password, profilePhoto: {location: picture}, isEmailConfirmed: true }) // Create user
                     await newUser.save()
                     const token = await newUser.generateAuthToken() // Generate token that is sent in next line
-                    res.status(201).send({ newUser, token })
+                    res.status(201).send({ "user": newUser , token })
                 }
             }
         }).catch(e => { // you need to catch the error for promise 
