@@ -20,7 +20,7 @@ const placeSchema = new mongoose.Schema({
                 "field", "room",
                 "restaurant", "school",
                 "church", "beach", "warehouse",
-                "others"
+                "others", "road", "rooftop"
             ]
     },
     description: {

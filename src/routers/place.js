@@ -91,7 +91,8 @@ router.get('/place', async (req, res) => {
             $all: amenitiesarray 
         }
     } if (req.query.availabledate) {
-        match.unavailabledate = { "$ne": req.query.availabledate }
+        // match.unavailabledate = { "$ne": req.query.availabledate }
+        match.unavailabledate = { "$nin": req.query.availabledate }
     } if (req.query.typeof) {
         match.typeof = req.query.typeof
     } if (req.query.featured) {
