@@ -92,7 +92,7 @@ router.get('/place', async (req, res) => {
         }
     } if (req.query.availabledate) {
         // match.unavailabledate = { "$ne": req.query.availabledate }
-        match.unavailabledate = { "$nin": req.query.availabledate }
+        match.unavailabledate = { "$nin": JSON.parse(req.query.availabledate) }
     } if (req.query.typeof) {
         match.typeof = req.query.typeof
     } if (req.query.featured) {
