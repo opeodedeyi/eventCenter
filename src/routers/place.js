@@ -102,7 +102,7 @@ router.get('/place', async (req, res) => {
         sort.score = {$meta: "textScore"}
     }
 
-    const noOnPage = parseInt(req.query.limit) || 10
+    const noOnPage = parseInt(req.query.limit) || 20
     const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
     const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
     const next = parseInt(req.query.page)+1
