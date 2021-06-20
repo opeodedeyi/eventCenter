@@ -9,7 +9,7 @@ const placeRouter = require('./routers/place')
 const adminRouter = require('./routers/admin')
 const commentRouter = require('./routers/comment')
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 4000
 
 app.use(cors())
 app.use(express.json())

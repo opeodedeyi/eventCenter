@@ -69,7 +69,7 @@ router.delete('/favorite/:id', auth, async (req, res) => {
 })
 
 
-// get all places (search and filter and sorting done here) -- (Tested)
+// get all places (search and filter and sorting done here) -- (Tested) wip
 router.get('/place', async (req, res) => {
     const match = {
         deactivated: false,
@@ -222,10 +222,10 @@ router.get('/mydeactivatedplaces', isVerified, async (req, res) => {
 
 
 // updating
-// Edit a place -- (Tested)
+// Edit a place -- (Tested) wip
 router.patch('/place/:id', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ["title", "description", "maxguest", "size", "deactivated", "rules", "rooms", "toilet", "price", "phonenumber", "location", "typeof", "time"]
+    const allowedUpdates = ["title", "description", "maxguest", "size", "deactivated", "rules", "rooms", "toilet", "price", "phonenumber", "location", "typeof", "time", "idealfor", "amenities", "accessibility", "unavailabledate"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {

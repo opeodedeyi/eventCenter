@@ -77,9 +77,14 @@ const placeSchema = new mongoose.Schema({
         trim: true
     },
     price: {
-        type: Number,
-        required: true,
-        trim: true
+        currency: {
+            type: String,
+            required: true
+        },
+        amount: {
+            type: Number,
+            required: true
+        }
     },
     amenities: [{
         type: String,
@@ -88,7 +93,7 @@ const placeSchema = new mongoose.Schema({
                 "wifi", "sound system", 
                 "private entrance", 
                 "kitchen", "large table", "tv",
-                "green screen", "Stage", 
+                "green screen", "stage", 
                 "changing room", "makeup room",
                 "lounge", "soundproof"
             ]
@@ -96,9 +101,9 @@ const placeSchema = new mongoose.Schema({
     accessibility: [{
         type: String,
         required: false,
-        enum: ["wheelchair", "Elevator", 
+        enum: ["wheelchair", "elevator", 
                 "on-site parking", "parking near by",
-                "Stairs"
+                "stairs"
             ]
     }],
     rules: {
@@ -126,10 +131,15 @@ const placeSchema = new mongoose.Schema({
         required: false,
         default: false
     },
-    phonenumber: {
-        type: String,
-        required: true,
-        trim: true
+    phone: {
+        code: {
+            type: String,
+            required: true
+        },
+        number: {
+            type: String,
+            required: true,
+        }
     },
 }, {
     timestamps: true

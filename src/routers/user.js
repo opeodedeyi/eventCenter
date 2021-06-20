@@ -38,7 +38,7 @@ router.post('/signup', async (req, res) => {
         const token = await user.generateAuthToken() // sends a token to the user
         res.status(201).send({ user, token, "message": "user created" })
     } catch (e) {
-        res.status(400).send({ "message": "Something went wrong" })
+        res.status(401).send({ "message": "Something went wrong" })
     }
 })
 
@@ -166,7 +166,7 @@ router.post('/login', async (req, res) => {
         const token = await user.generateAuthToken()
         res.status(200).send({ user, token })
     } catch (e) {
-        res.status(400).send({ "message": "Failed to log in" })
+        res.status(401).send({ "message": "Failed to log in" })
     }
 })
 
