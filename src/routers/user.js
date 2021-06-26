@@ -95,6 +95,25 @@ router.post('/requestverification', async (req, res) => {
 })
 
 
+// Request new verification email loggedin user -- (Tested)(mail)
+router.post('/requestverificationloggedin', auth, async (req, res) => {
+    const user = req.user
+
+    if (!user) {
+        return res.status(401).send({ "message": "there is no such user, please signup" })
+    } if (user.isEmailConfirmed) {
+        return res.status(401).send({ "message": "Email is already verified" })
+    }
+
+    try {
+        sendConfirmationEmail(user)
+        res.status(201).send({ user, "message": "verification email has been sent" })
+    } catch (e) {
+        res.status(401).send({"message": "Email failed to send"})
+    }
+})
+
+
 // Confirming an email -- (Tested)
 router.get('/confirmation/:token', async (req, res) => {
     try {

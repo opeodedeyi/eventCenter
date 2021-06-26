@@ -141,11 +141,22 @@ router.get('/place', async (req, res) => {
 })
 
 
-// add a route to get all images to a place -- (Tested)
+// Get all images to a place -- (Tested)
 router.get('/place/:id/photo', async (req, res) => {
     try {
         const images = await Media.find({ place: req.params.id })
         res.status(200).send(images)
+    } catch (e) {
+        res.status(401).send({ "message": "something went wrong please reload page" })
+    }
+})
+
+
+// Get a single image to a place -- (Tested)
+router.get('/place/:id/onephoto', async (req, res) => {
+    try {
+        const image = await Media.findOne({ place: req.params.id })
+        res.status(200).send(image)
     } catch (e) {
         res.status(401).send({ "message": "something went wrong please reload page" })
     }
