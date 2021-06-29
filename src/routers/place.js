@@ -166,7 +166,7 @@ router.get('/place/:id/onephoto', async (req, res) => {
 // get a single place -- (Tested)
 router.get('/place/:id', async (req, res) => {
     try {
-        const place = await Place.findById(req.params.id)
+        const place = await Place.findById(req.params.id).populate('owner')
         res.status(200).send(place)
     } catch (e) {
         res.status(401).send({ "message": "something went wrong please reload page" })
