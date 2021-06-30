@@ -30,9 +30,26 @@ const placeSchema = new mongoose.Schema({
         trim: true
     },
     location: {
-        type: String,
-        required: true,
-        trim: true
+        country: {
+            type: String,
+            required: true,
+        },
+        street: {
+            type: String,
+            required: true,
+        },
+        city: {
+            type: String,
+            required: true,
+        },
+        state: {
+            type: String,
+            required: true,
+        },
+        zip: {
+            type: String,
+            required: true,
+        }
     },
     time: {
         alwaysopen: {
@@ -145,7 +162,16 @@ const placeSchema = new mongoose.Schema({
     timestamps: true
 })
 
-placeSchema.index({ location: 'text' });
+placeSchema.index({ 
+    location: {
+        country: 'text',
+        street: 'text',
+        city: 'text',
+        state: 'text',
+        zip: 'text'
+    }
+});
+// placeSchema.index( { location: "text" } )
 
 
 const Place = mongoose.model('Place', placeSchema)
