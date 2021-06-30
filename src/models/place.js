@@ -48,7 +48,7 @@ const placeSchema = new mongoose.Schema({
         },
         zip: {
             type: String,
-            required: true,
+            required: false,
         }
     },
     time: {
@@ -162,16 +162,16 @@ const placeSchema = new mongoose.Schema({
     timestamps: true
 })
 
-placeSchema.index({ 
-    location: {
-        country: 'text',
-        street: 'text',
-        city: 'text',
-        state: 'text',
-        zip: 'text'
-    }
-});
-// placeSchema.index( { location: "text" } )
+// placeSchema.index({ 
+//     location: {
+//         country: 'text',
+//         street: 'text',
+//         city: 'text',
+//         state: 'text',
+//         zip: 'text'
+//     }
+// });
+placeSchema.index( { "location.country": "text", "location.street": "text", "location.city": "text", "location.state": "text", "location.zip": "text" } )
 
 
 const Place = mongoose.model('Place', placeSchema)
