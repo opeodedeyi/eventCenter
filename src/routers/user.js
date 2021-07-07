@@ -100,9 +100,9 @@ router.post('/requestverificationloggedin', auth, async (req, res) => {
     const user = req.user
 
     if (!user) {
-        return res.status(401).send({ "message": "there is no such user, please signup" })
+        return res.status(404).send({ "message": "there is no such user, please signup" })
     } if (user.isEmailConfirmed) {
-        return res.status(401).send({ "message": "Email is already verified" })
+        return res.status(400).send({ "message": "Email is already verified" })
     }
 
     try {
