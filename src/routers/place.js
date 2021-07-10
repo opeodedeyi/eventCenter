@@ -33,38 +33,60 @@ router.post('/place', isVerified, async (req, res) => {
 router.post('/favorite/:id', auth, async (req, res) => {
     const placeId = req.params.id
     const place = await Place.findById(placeId)
-    const user = req.user
+    const userId = req.user._id
 
     try {
         if (!place) {
             return res.status(404).send({"message": "This place does not exist"})
         }
-        req.user.savedplaces.addToSet(placeId)
-        await req.user.save()
-        res.status(200).send({ user, "message": "This place has been saved" })
+        place.saved.addToSet(userId)
+        await place.save()
+        res.status(200).send({ place, "message": "This place has been saved" })
     } catch (e) {
-        res.status(400).send({"message": "failed to add this place to my saved places"})
+        res.status(401).send({"message": "failed to add this place to my saved places"})
     }
 })
 
 
-// remove a place to my saved/favorite places -- (Tested)
+// remove a place from my saved/favorite places -- (Tested)
 router.delete('/favorite/:id', auth, async (req, res) => {
     const placeId = req.params.id
     const place = await Place.findById(placeId)
-    const user = req.user
+    const userId = req.user._id
 
     try {
         if (!place) {
             return res.status(404).send({"message": "This place does not exist"})
         }
-        req.user.savedplaces = req.user.savedplaces.filter((objid) => { 
-            return objid != placeId 
+        place.saved = place.saved.filter((objid) => {
+            objid != userId 
         })
-        await req.user.save()
-        res.status(200).send({ user, "message": "This place has been removed" })
+        await place.save()
+        res.status(200).send({ place, "message": "This place is no longer saved" })
     } catch (e) {
-        res.status(400).send({"message": "failed to remove this place from my saved places"})
+        res.status(401).send({"message": "failed to remove this place from my saved places"})
+    }
+})
+
+
+// Check if logged in user has saved a place -- (Tested)
+router.get('/favorite/:id', auth, async (req, res) => {
+    const placeId = req.params.id
+    const place = await Place.findById(placeId)
+    const userId = req.user._id
+
+    try {
+        if (!place) {
+            return res.status(404).send({"message": "This place does not exist"})
+        }
+
+        let isSaved = place.saved.some(function (objid) {
+            return objid.equals(userId);
+        });
+        
+        return res.status(200).send({ "saved": isSaved })
+    } catch (e) {
+        res.status(401).send({"message": "something went wrong"})
     }
 })
 
@@ -73,7 +95,6 @@ router.delete('/favorite/:id', auth, async (req, res) => {
 router.get('/place', async (req, res) => {
     const match = {
         deactivated: false,
-        img: true // Only places with photos should show
     }
     const sort = {}
 
@@ -97,6 +118,8 @@ router.get('/place', async (req, res) => {
         match.typeof = req.query.typeof
     } if (req.query.featured) {
         match.featured = req.query.featured
+    } if (req.query.img) {
+        match.img = req.query.img
     } if (req.query.search) {
         match.$text = {$search: req.query.search}
         sort.score = {$meta: "textScore"}
@@ -137,6 +160,57 @@ router.get('/place', async (req, res) => {
         res.status(200).send(result)
     } catch (e) {
         res.status(400).send({ "message": "something went wrong please reload page" })
+    }
+})
+
+
+// get all saved places -- (Tested)
+router.get('/savedplace', auth, async (req, res) => {
+    const match = {
+        saved: req.user._id,
+    }
+    const sort = {}
+
+    // filters using if statements
+    if (req.query.deactivated) {
+        match.deactivated = req.query.deactivated
+    }
+
+    const noOnPage = parseInt(req.query.limit) || 20
+    const pageNo = (parseInt(req.query.page)-1)*parseInt(req.query.limit) || 0
+    const endIndex = parseInt(req.query.page)*parseInt(req.query.limit)
+    const next = parseInt(req.query.page)+1
+    const previous = parseInt(req.query.page)-1
+
+    try {
+        const count = await Place.find(match).countDocuments().exec()
+
+        const place = await Place.find(match, sort)
+        .limit(noOnPage)
+        .skip(pageNo)
+        .sort(sort)
+
+        const result = {}
+
+        // Shows the search result count
+        result.resultCount = count
+
+        // Shows the previous page number
+        if (parseInt(req.query.page)!=1) {
+            result.previous = previous
+        }
+
+        // Shows the next page number
+        if (endIndex < count) {
+            result.next = next
+        }
+
+        // assigns the search results to variable names results
+        result.results = place
+
+        res.status(200).send(result)
+    } catch (e) {
+        res.status(400).send({ "message": "something went wrong please login and reload page" })
     }
 })
 

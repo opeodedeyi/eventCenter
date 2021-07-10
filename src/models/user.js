@@ -71,11 +71,6 @@ const userSchema = new mongoose.Schema({
         required: false,
         default: false
     },
-    savedplaces: [{
-        type: mongoose.Schema.Types.ObjectId,
-        required: false,
-        ref: 'Place'
-    }],
     tokens: [{
         token: {
             type: String,

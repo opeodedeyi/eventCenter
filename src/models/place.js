@@ -123,6 +123,11 @@ const placeSchema = new mongoose.Schema({
                 "stairs"
             ]
     }],
+    saved: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    }],
     rules: {
         type: String,
         required: false,
