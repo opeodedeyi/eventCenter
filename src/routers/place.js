@@ -100,9 +100,9 @@ router.get('/place', async (req, res) => {
 
     // filters using if statements
     if (req.query.idealfor) {
-        match.idealfor = req.query.idealfor
+        match.idealfor = { $all : req.query.idealfor }
     } if (req.query.amenities) {
-        match.amenities = req.query.amenities
+        match.amenities = { $all : req.query.amenities }
     } if (req.query.availabledate) {
         // match.unavailabledate = { "$ne": req.query.availabledate }
         match.unavailabledate = { "$nin": JSON.parse(req.query.availabledate) }
