@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const mediaSchema = new mongoose.Schema({
     etag: {
         type: String,
-        required: true,
+        required: false,
         trim: true
     },
     location: {
