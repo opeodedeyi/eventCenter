@@ -243,7 +243,7 @@ router.get('/place/:id', async (req, res) => {
 // get a place to be edited -- (Tested)
 router.get('/placetoedit/:id', auth, async (req, res) => {
     try {
-        const place = await Place.findOne({ _id: req.params.id, owner: req.user._id })
+        const place = await Place.findOne({ _id: req.params.id, owner: req.user._id }).select(['-createdAt', '-featured', '-img', '-owner', '-saved', '-updatedAt', '-__v', '-_id'])
         if (!place) {
             return res.status(404).send({ "message": "place does not exist" })
         }
