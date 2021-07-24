@@ -302,7 +302,7 @@ router.get('/mydeactivatedplaces', isVerified, async (req, res) => {
 // Edit a place -- (Tested) wip
 router.patch('/place/:id', isVerified, async (req, res) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ["title", "description", "maxguest", "size", "deactivated", "rules", "rooms", "toilet", "price", "phonenumber", "location", "typeof", "time", "idealfor", "amenities", "accessibility", "unavailabledate"]
+    const allowedUpdates = ["title", "typeof", "description", "location", "time", "idealfor", "maxguest", "size", "rooms", "toilet", "price", "amenities", "accessibility", "rules", "unavailabledate", "deactivated", "phone"]
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {
