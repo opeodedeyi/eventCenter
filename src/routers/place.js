@@ -396,6 +396,37 @@ router.delete('/place/:id', isVerified, async (req, res) => {
 })
 
 
+// deactivate a place -- (Tested)
+router.delete('/place/:id/active', isVerified, async (req, res) => {
+    const _id = req.params.id
+
+    try {
+        const place = await Place.findOne({ _id, owner: req.user._id }) 
+        place.deactivated = true
+        await place.save()
+        res.status(204).send({ "message": "successfully deactivated" })
+    } catch (e) {
+        res.status(400).send({ "message": "failed to deactivated" })
+    }
+})
+
+
+// reactivate a place -- (Tested)
+router.patch('/place/:id/active', isVerified, async (req, res) => {
+    const _id = req.params.id
+
+    try {
+        const place = await Place.findOne({ _id, owner: req.user._id }) 
+        place.deactivated = false
+        await place.save()
+        res.status(204).send({ "message": "successfully activate" })
+    } catch (e) {
+        res.status(400).send({ "message": "failed to activate" })
+    }
+})
+
+
+
 // delete a place's photo -- (Tested)
 router.delete('/photo/:id', isVerified, async (req, res) => {
     const _id = req.params.id
@@ -423,65 +454,5 @@ router.delete('/photo/:id', isVerified, async (req, res) => {
         res.status(400).send({ "message": "image failed to delete" })
     }
 })
-
-// add to [idealfor, amenities, accessibility, unavailabledate] -- (Tested)
-router.patch('/place/:id/list', isVerified, async (req, res) => {
-    const updates = Object.keys(req.body)
-    const allowedUpdates = ["idealfor", "amenities", "accessibility", "unavailabledate"]
-    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
-
-    if (!isValidOperation) {
-        return res.status(404).send({ error: 'Invalid updates!' })
-    }
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-        if (!place) {
-            return res.status(404).send({ "message": "place does not exist" })
-        }
-
-        for (let update of updates) {
-            for (let item of req.body[update]) {
-                place[update].addToSet(item)
-            }
-        }
-        await place.save()
-        res.status(200).send({ place, "message": "successfully updated" })
-    } catch (e) {
-        res.status(400).send({ "message": "failed to update" })
-    }
-})
-
-
-// remove from [idealfor, amenities, accessibility, unavailabledate] -- (Tested)
-router.delete('/place/:id/list', isVerified, async (req, res) => {
-    const updates = Object.keys(req.body)
-    const allowedUpdates = ["idealfor", "amenities", "accessibility", "unavailabledate"]
-    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
-
-    if (!isValidOperation) {
-        return res.status(404).send({ error: 'Invalid updates!' })
-    }
-
-    try {
-        const place = await Place.findOne({ _id: req.params.id, owner:req.user._id })
-        if (!place) {
-            return res.status(400).send({ "message": "place does not exist" })
-        }
-
-        for (let update of updates) {
-            for (let item of req.body[update]) {
-                place[update] = place[update].filter((idea) => { 
-                    return idea != item 
-                })
-            }
-        }
-        await place.save()
-        res.status(201).send({ place, "message": "successfully removed" })
-    } catch (e) {
-        res.status(400).send({ "message": "failed to remove" })
-    }
-})
-
 
 module.exports = router
