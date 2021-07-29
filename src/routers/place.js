@@ -114,7 +114,8 @@ router.get('/place', async (req, res) => {
         match.img = req.query.img
     } if (req.query.search) {
         match.$text = {$search: req.query.search}
-        sort.score = {$meta: "textScore"}
+        // sort.score = {$meta: "textScore"}
+        sort.score = -1
     }
 
     const noOnPage = parseInt(req.query.limit) || 20
@@ -126,7 +127,12 @@ router.get('/place', async (req, res) => {
     try {
         const count = await Place.find(match).countDocuments().exec()
 
-        const place = await Place.find(match, sort)
+        // const place = await Place.distinct(match, sort)
+        // .limit(noOnPage)
+        // .skip(pageNo)
+        // .sort(sort)
+
+        const place = await Place.find(match)
         .limit(noOnPage)
         .skip(pageNo)
         .sort(sort)
