@@ -95,6 +95,20 @@ router.post('/admin/:id/verify', specialPrevilege, async (req, res) => {
 })
 
 
+// find a user using email
+router.get('/admin/userdetails', specialPrevilege, async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.query.email })
+        if (!user) {
+            return res.status(404).send({"message": "This place does not exist"})
+        }
+        return res.status(200).send({ user })
+    } catch (e) {
+        res.status(400).send({ e, "message": "failed to ban the user" })
+    }
+})
+
+
 // Unverify a user -- (Tested)
 router.post('/admin/:id/unverify', specialPrevilege, async (req, res) => {
     try {

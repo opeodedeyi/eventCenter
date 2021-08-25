@@ -105,15 +105,7 @@ const placeSchema = new mongoose.Schema({
     },
     amenities: [{
         type: String,
-        required: false,
-        enum: ["electricity", "a/c", 
-                "wifi", "sound system", 
-                "private entrance", 
-                "kitchen", "large table", "tv",
-                "green screen", "stage", 
-                "changing room", "makeup room",
-                "lounge", "soundproof"
-            ]
+        required: false
     }],
     accessibility: [{
         type: String,
