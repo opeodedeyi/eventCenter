@@ -66,12 +66,7 @@ const placeSchema = new mongoose.Schema({
     },
     idealfor: [{
         type: String,
-        required: false,
-        enum: ["reception", "production", 
-                "meeting", "performance",
-                "dinner", "wedding",
-                "party", "conference"
-            ]
+        required: false
     }],
     maxguest: {
         type: Number,
