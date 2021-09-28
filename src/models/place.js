@@ -102,7 +102,7 @@ const placeSchema = new mongoose.Schema({
             type: String,
             required: false,
             default: 'day',
-            enum: ["30 minutes", "hour", 
+            enum: ["half-hour", "hour", 
                 "day"
             ]
         }
