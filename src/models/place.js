@@ -15,11 +15,11 @@ const placeSchema = new mongoose.Schema({
     typeof: {
         type: String,
         required: true,
-        // enum: ["studio", "house", "field", "room",
-        //         "restaurant", "school", "church", 
-        //         "beach", "warehouse", "others", 
-        //         "road", "rooftop"
-        //     ]
+        enum: ["studio", "house", "field", "room",
+                "restaurant", "school", "church", 
+                "beach", "warehouse", "others", 
+                "road", "rooftop"
+            ]
     },
     description: {
         type: String,
@@ -65,8 +65,8 @@ const placeSchema = new mongoose.Schema({
     idealfor: [{
         type: String,
         required: false,
-        // enum: ["house party", "videography", 
-        //         "photography"
+        // enum: ["house party", "video shoot", 
+        //         "photo shoot"
         //     ]
     }],
     maxguest: {
@@ -117,9 +117,9 @@ const placeSchema = new mongoose.Schema({
     accessibility: [{
         type: String,
         required: false,
-        // enum: ["wheelchair", "elevator", 
-        //         "on-site parking", "parking near by",
-        //         "stairs"
+        // enum: ["wheelchair accessible", "elevator", 
+        //         "parking space", "natural light",
+        //         "soundproof", "stairs"
         //     ]
     }],
     saved: [{
